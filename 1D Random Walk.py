@@ -2,57 +2,63 @@ import time
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-    
+
 def generate_random_sign():
     n = random.choice([-1, 1])
     return n
+    
+num_trial = 1000
+num_samples_list = [100, 1000, 10000, 100000, 1000000]
+dist = {}
 
-num_trial, num_samples = 1000, 10000
-pos_x = 0
-dist = []
+for num_samples in num_samples_list:
+    pos_x = 0
+    d = []
 
-start_time = time.time()
+    start_time = time.time()
 
-for i in range(num_trial):
-    x = 0
-    for i in range(num_samples):
+    for i in range(num_trial):
+        x, y = 0, 0
+        for i in range(num_samples):
 
-        x1 = generate_random_sign()
+            x1 = generate_random_sign()
 
-        if x1 == 1:
-            pos_x += 1
-        
-        x += x1
+            if x1 == 1:
+                pos_x += 1
+            
+            x += x1
 
-    dist.append(x)
+        d.append(x)
 
-end_time = time.time()
-calculation_time = end_time - start_time
+    dist[num_samples] = (d, round(np.mean(d), 2), round(np.std(d), 2))
 
-max_dist = max(max(dist), abs(min(dist)))
+    end_time = time.time()
+    calculation_time = end_time - start_time
 
-print("========== Result ==========")
-print(f"Positive percentage for x: {round((pos_x * 100 / (num_samples * num_trial)), 2)} %")
-print("")
-print(f"Calculation time: {round(calculation_time, 4)} seconds")
-print("")
-print(f"Min distance: {round(min(dist), 2)}")
-print(f"Max distance: {round(max(dist), 2)}")
-print(f"Average distance: {round(np.mean(dist), 2)}")
-print(f"Standard deviation of distance: {round(np.std(dist), 2)}")
-print("")
+    print(f"Calculation time for num_samples = {num_samples}: {round(calculation_time, 4)} seconds")
+
+fig, axs = plt.subplots(3, 2, figsize = (10, 10))
+
+for i, num_samples in enumerate(num_samples_list):
+
+    row = np.log10(num_samples)
+
+    if row % 2 == 0:
+        r = 0
+        c = int(row / 2 - 1)
+    else:
+        r = 1
+        c = int(np.floor(row / 2 - 1))
+
+    d = dist[num_samples][0]
+    max_dist = max(d)
+
+    axs[c, r].hist(d, bins = 100)
+    axs[c, r].set_title(f'Distance, num_samples = {num_samples}\nAvg = {dist[num_samples][1]}, Std = {dist[num_samples][2]}')
+    axs[c, r].set_xlim([-max_dist, max_dist])
+    axs[c, r].set_ylabel('Probability density')
 
 
-print("|  | Min distance | Max distance | Average distance | Standard Deviation |")
-print("| - | - | - | - | - |")
-print(f"| Distance | {round(min(dist), 2)} | {round(max(dist), 2)} | {round(np.mean(dist), 2)} | {round(np.std(dist), 2)} |")
-
-plt.hist(dist, bins = 100)
-plt.xlabel("Distance from the origin")
-plt.ylabel("Probability density")
-plt.xlim([-max_dist, max_dist])
-
-plt.title(f"Probability density of 1D Random walk, trials = {num_trial}, steps = {num_samples}")
-
-plt.savefig(f"./graph/1D_{num_trial}_{num_samples}.png", dpi = 300)
+plt.tight_layout()
+plt.savefig(f"./graph/1D.png", dpi = 300)
 plt.show()
